@@ -99,3 +99,125 @@ flowchart LR
 
 ```
 ```
+## Analyse des erreurs du modèle
+
+Le modèle a été évalué sur les 30 avis présents dans `data/sample_reviews.csv`. Pour chaque avis, la classe prédite par l’API a été comparée au sentiment attendu dans le dataset.
+
+### Résultat global
+
+* Reviews évaluées : **30**
+* Reviews correctement classées : **23**
+* Reviews mal classées : **7**
+* Exactitude observée : **76,7 %**
+
+Ces résultats montrent que le modèle fonctionne correctement sur les avis contenant un sentiment explicite, mais rencontre davantage de difficultés avec l’ironie, les négations, les comparaisons temporelles et les avis qui mélangent plusieurs opinions.
+
+### Cas 1 — Avis mixte
+
+> Chambre superbe avec vue sur le port mais petit-déjeuner décevant et service très lent.
+
+* Sentiment attendu : `neutre`
+* Sentiment prédit : `négatif`
+* Étoile dominante : `3 stars`
+* Confiance : `43,81 %`
+* Type d’erreur : **mixte / ambivalence**
+
+L’avis contient une information très positive sur la chambre, mais également deux critiques concernant le petit-déjeuner et la lenteur du service. Le modèle semble accorder davantage de poids aux expressions négatives situées après le mot « mais ».
+
+Il est également important de noter que l’étoile dominante est `3 stars`, alors que la classe métier retournée est `négatif`. Cette différence suggère que l’erreur ne vient pas uniquement du modèle : la logique d’agrégation des probabilités lors du mapping vers trois classes peut également influencer le résultat.
+
+### Cas 2 — Ironie
+
+> Personnel charmant, comme une porte de prison. Trois quarts d'heure d'attente au check-in.
+
+* Sentiment attendu : `négatif`
+* Sentiment prédit : `neutre`
+* Étoile dominante : `3 stars`
+* Confiance : `32,22 %`
+* Type d’erreur : **ironie**
+
+Le début de la phrase contient l’expression positive « personnel charmant ». Le sens négatif repose sur la comparaison ironique « comme une porte de prison ». Le modèle identifie difficilement que le mot positif est utilisé de manière sarcastique.
+
+La confiance relativement faible confirme que le modèle hésite entre plusieurs classes.
+
+### Cas 3 — Négation et litote
+
+> Pas mauvais du tout, on s'attendait à pire vu les avis. Bonne surprise sur le rapport qualité-prix.
+
+* Sentiment attendu : `positif`
+* Sentiment prédit : `neutre`
+* Étoile dominante : `3 stars`
+* Confiance : `66,79 %`
+* Type d’erreur : **négation / litote**
+
+L’expression « pas mauvais du tout » exprime une opinion positive à travers une négation. Le texte contient aussi des formulations négatives comme « pire », ce qui peut perturber le modèle.
+
+Le sentiment positif est implicite et moins direct qu’une phrase comme « le séjour était excellent ». Le modèle interprète donc l’avis comme modéré plutôt que réellement positif.
+
+### Cas 4 — Comparatif temporel et sentiment mixte
+
+> Mieux que la dernière fois, c'est déjà ça. Reste que la douche fuit toujours dans la salle de bain.
+
+* Sentiment attendu : `négatif`
+* Sentiment prédit : `neutre`
+* Étoile dominante : `3 stars`
+* Confiance : `36,16 %`
+* Type d’erreur : **comparatif temporel / mixte**
+
+L’expression « mieux que la dernière fois » est positive uniquement dans le cadre d’une comparaison avec une expérience antérieure. Elle ne signifie pas que le séjour actuel est satisfaisant.
+
+La seconde phrase indique que le problème principal existe toujours. Le modèle semble équilibrer les deux parties de la review et produire une classe neutre, alors que le défaut persistant justifie une classification négative pour l’équipe qualité.
+
+### Cas 5 — Neutralité factuelle
+
+> Établissement standard, conforme à la description. Rien à signaler de particulier.
+
+* Sentiment attendu : `neutre`
+* Sentiment prédit : `positif`
+* Étoile dominante : `4 stars`
+* Confiance : `54,53 %`
+* Type d’erreur : **neutralité interprétée comme satisfaction**
+
+Les expressions « conforme à la description » et « rien à signaler » peuvent être associées à une expérience satisfaisante. Cependant, l’avis ne contient ni enthousiasme ni critique particulière.
+
+Le modèle semble interpréter l’absence de problème comme un sentiment positif, alors que la vérité terrain considère cet avis comme neutre.
+
+### Cas 6 — Ironie et sarcasme
+
+> On a passé un séjour qu'on n'oubliera pas. La climatisation en panne en plein août, sympa.
+
+* Sentiment attendu : `négatif`
+* Sentiment prédit : `positif`
+* Étoile dominante : `4 stars`
+* Confiance : `50,83 %`
+* Type d’erreur : **ironie / sarcasme**
+
+Les expressions « séjour qu’on n’oubliera pas » et « sympa » ont une apparence positive lorsqu’elles sont analysées littéralement. Dans le contexte, elles sont utilisées de manière sarcastique pour dénoncer une climatisation en panne pendant une période de forte chaleur.
+
+Il s’agit de l’erreur la plus problématique observée, car un avis négatif nécessitant potentiellement une action rapide est classé comme positif. C’est un faux négatif métier : l’équipe qualité risque de ne pas prioriser cet avis.
+
+### Cas 7 — Ambivalence lexicale
+
+> Séjour neutre, sans plus. Le personnel fait son travail, l'hôtel sa fonction. Rien de mémorable.
+
+* Sentiment attendu : `neutre`
+* Sentiment prédit : `négatif`
+* Étoile dominante : `2 stars`
+* Confiance : `48,86 %`
+* Type d’erreur : **ambivalence / expressions modérément négatives**
+
+Le texte indique explicitement que le séjour est neutre. Toutefois, les formulations « sans plus » et « rien de mémorable » comportent une connotation négative.
+
+Le modèle semble donner davantage de poids à cette déception implicite qu’au mot « neutre », ce qui produit une classification négative.
+
+### Conclusion de l’analyse
+
+Les erreurs observées montrent que le modèle est surtout fiable lorsque le sentiment est exprimé directement. Ses principales limites concernent :
+
+* l’ironie et le sarcasme ;
+* les négations et les litotes ;
+* les avis contenant simultanément des éléments positifs et négatifs ;
+* les comparaisons avec une expérience antérieure ;
+* la distinction entre une expérience neutre et une satisfaction modérée.
+
+Dans un contexte réel, les prédictions peu confiantes ou les avis contenant des formulations complexes pourraient être transmis à un opérateur humain. Une autre amélioration serait de définir un seuil de confiance sous lequel aucune décision automatique n’est prise.
