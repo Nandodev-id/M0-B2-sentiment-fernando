@@ -1,47 +1,73 @@
 {
   "info": {
-    "name": "M0-B2 Aubergine Hôtels — sentiment FR",
-    "description": "Collection Postman de départ pour le brief M0-B2. Les requêtes `/health` et `/info` sont préremplies. Les requêtes `/predict` sont à compléter selon les cas que tu veux tester (happy path, cas limites, cas piégeux).",
+    "_postman_id": "4a0d8a44-7d3f-4e2d-b2c8-7f6dd42a0b21",
+    "name": "M0-B2 - Aubergine Hôtels NLP",
+    "description": "Collection Postman complète pour le brief M0-B2 : healthcheck, informations du service, prédictions positive et négative, cas limites, ironie et caractères spéciaux.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     {
       "key": "base_url",
-      "value": "http://localhost:8000",
-      "type": "string"
+      "value": "http://localhost:8000"
     }
   ],
   "item": [
     {
-      "name": "GET /health",
+      "name": "Healthcheck - 200",
       "request": {
         "method": "GET",
         "header": [],
         "url": {
           "raw": "{{base_url}}/health",
-          "host": ["{{base_url}}"],
-          "path": ["health"]
-        },
-        "description": "Statut du service. `model_loaded:true` quand le modèle CamemBERT est prêt."
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "health"
+          ]
+        }
       },
-      "response": []
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Model loaded', function () { const json = pm.response.json(); pm.expect(json.status).to.eql('ok'); pm.expect(json.model_loaded).to.eql(true); });"
+            ]
+          }
+        }
+      ]
     },
     {
-      "name": "GET /info",
+      "name": "Service info - 200",
       "request": {
         "method": "GET",
         "header": [],
         "url": {
           "raw": "{{base_url}}/info",
-          "host": ["{{base_url}}"],
-          "path": ["info"]
-        },
-        "description": "Métadonnées du service : nom du modèle, classes natives 5★, classes cibles 3 (négatif/neutre/positif), max length texte."
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "info"
+          ]
+        }
       },
-      "response": []
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Target classes exposed', function () { const json = pm.response.json(); pm.expect(json.target_classes).to.include.members(['négatif', 'neutre', 'positif']); });"
+            ]
+          }
+        }
+      ]
     },
     {
-      "name": "POST /predict — review positive",
+      "name": "Predict - review positive",
       "request": {
         "method": "POST",
         "header": [
@@ -52,19 +78,37 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"texte\": \"Personnel charmant, chambre impeccable, petit-déjeuner copieux. On reviendra !\"\n}"
+          "raw": "{\"texte\": \"Excellent séjour, personnel accueillant et chambre impeccable.\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
         },
         "url": {
           "raw": "{{base_url}}/predict",
-          "host": ["{{base_url}}"],
-          "path": ["predict"]
-        },
-        "description": "Cas valide attendu : sentiment = 'positif'."
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "predict"
+          ]
+        }
       },
-      "response": []
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Valid response structure', function () { const json = pm.response.json(); pm.expect(['négatif', 'neutre', 'positif']).to.include(json.sentiment); pm.expect(json.scores_5_stars).to.be.an('object'); pm.expect(json.model_name).to.be.a('string'); pm.expect(json.latence_ms).to.be.a('number'); });"
+            ]
+          }
+        }
+      ]
     },
     {
-      "name": "POST /predict — review négative",
+      "name": "Predict - review négative",
       "request": {
         "method": "POST",
         "header": [
@@ -75,19 +119,40 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"texte\": \"Accueil glacial à la réception, chambre froide et bruyante, nous ne reviendrons pas.\"\n}"
+          "raw": "{\"texte\": \"Accueil glacial à la réception, chambre froide et bruyante, nous ne reviendrons pas.\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
         },
         "url": {
           "raw": "{{base_url}}/predict",
-          "host": ["{{base_url}}"],
-          "path": ["predict"]
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "predict"
+          ]
         },
-        "description": "Cas valide attendu : sentiment = 'négatif'."
+        "description": "Cas valide attendu : sentiment négatif."
       },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Sentiment négatif', function () { const json = pm.response.json(); pm.expect(json.sentiment).to.eql('négatif'); });",
+              "pm.test('Valid response structure', function () { const json = pm.response.json(); pm.expect(json.scores_5_stars).to.be.an('object'); pm.expect(json.model_name).to.be.a('string'); pm.expect(json.latence_ms).to.be.a('number'); });"
+            ]
+          }
+        }
+      ],
       "response": []
     },
     {
-      "name": "POST /predict — texte vide (422 attendu)",
+      "name": "Predict - texte vide - 422",
       "request": {
         "method": "POST",
         "header": [
@@ -98,16 +163,155 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"texte\": \"\"\n}"
+          "raw": "{\"texte\": \"\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
         },
         "url": {
           "raw": "{{base_url}}/predict",
-          "host": ["{{base_url}}"],
-          "path": ["predict"]
-        },
-        "description": "Validation Pydantic : texte vide doit renvoyer 422."
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "predict"
+          ]
+        }
       },
-      "response": []
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 422', function () { pm.response.to.have.status(422); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Predict - texte > 2000 caractères - 422",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"texte\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/predict",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "predict"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 422', function () { pm.response.to.have.status(422); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Predict - review ironique",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"texte\": \"On a passé un séjour qu'on n'oubliera pas. La climatisation en panne en plein août, sympa.\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/predict",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "predict"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Sentiment remains a business class', function () { const json = pm.response.json(); pm.expect(['négatif', 'neutre', 'positif']).to.include(json.sentiment); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Predict - caractères spéciaux",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"texte\": \"Très bon séjour 😊 ! Chambre propre, accueil chaleureux, café à 2,50 € — rien à redire.\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/predict",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "predict"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Response is valid JSON', function () { pm.response.to.be.json; });"
+            ]
+          }
+        }
+      ]
     }
   ]
 }
