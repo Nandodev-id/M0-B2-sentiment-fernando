@@ -71,3 +71,31 @@ Les tests peuvent être exécutés directement dans le conteneur FastAPI :
 ```bash
 docker compose exec api-nlp pytest -v
 ```
+````markdown id="4ksrgm"
+## Architecture
+
+```mermaid
+flowchart LR
+    U[Utilisateur / Équipe qualité] -->|Navigateur| S[Streamlit UI<br/>Port 8501]
+
+    S -->|HTTP POST /predict<br/>timeout 10 s| A[FastAPI api-nlp<br/>Port 8000]
+    S -->|HTTP GET /health| A
+
+    A -->|Chargement du pipeline| M[DistilCamemBERT FR<br/>cmarkea/distilcamembert-base-sentiment]
+    M -->|Cache Hugging Face| V1[(./models)]
+
+    A -->|Journalisation Loguru| V2[(./logs)]
+
+    A --> R1[/GET /health/]
+    A --> R2[/GET /info/]
+    A --> R3[/POST /predict/]
+
+    D[Docker Compose] --> S
+    D --> A
+    D --> H[Healthcheck Docker]
+
+    H -->|Vérifie que l’API répond| A
+````
+
+```
+```
