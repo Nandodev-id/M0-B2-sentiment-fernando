@@ -2,7 +2,7 @@ id,hotel,texte,sentiment_attendu,sentiment_predit,top_star,confiance,correct
 1,Aubergine Bordeaux,"Accueil glacial à la réception, chambre froide et bruyante, nous ne reviendrons pas.",négatif,négatif,2 stars,0.4095,True
 2,Aubergine Bordeaux,"Personnel charmant, chambre impeccable, petit-déjeuner copieux. On reviendra avec plaisir.",positif,positif,5 stars,0.5284,True
 3,Aubergine La Rochelle,Séjour correct sans plus. La chambre fait son âge mais reste fonctionnelle pour une nuit.,neutre,neutre,3 stars,0.7737,True
-4,Aubergine La Rochelle,Chambre superbe avec vue sur le port mais petit-déjeuner décevant et service très lent.,neutre,négatif,3 stars,0.4381,False
+4,Aubergine La Rochelle,Chambre superbe avec vue sur le port mais petit-déjeuner décevant et service très lent.,neutre,neutre,3 stars,0.4381,True
 5,Aubergine Biarritz,"Personnel charmant, comme une porte de prison. Trois quarts d'heure d'attente au check-in.",négatif,neutre,3 stars,0.3222,False
 6,Aubergine Biarritz,"Vue magnifique, lit confortable, calme absolu. Exactement ce qu'on cherchait pour un weekend.",positif,positif,5 stars,0.7905,True
 7,Aubergine Pau,"Pas mauvais du tout, on s'attendait à pire vu les avis. Bonne surprise sur le rapport qualité-prix.",positif,neutre,3 stars,0.6679,False
